@@ -1,0 +1,4 @@
+interface:
+  display_name: "洗稿"
+  short_description: "短剧洗稿重构、真人拍摄剧本、低场景成本和甲方交付质检标准"
+  default_prompt: "Use $short-drama-rewrite-delivery to turn a source drama into a low-scene, live-action, 30-episode short-drama delivery draft."
