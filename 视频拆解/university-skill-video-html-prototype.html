@@ -1,0 +1,1132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>大学 Skill 视频 HTML 原型</title>
+  <style>
+    :root {
+      --ink: #27231f;
+      --muted: #756e64;
+      --paper: #fffaf0;
+      --paper-2: #f5eddc;
+      --line: #5d554b;
+      --wash: #e9ece3;
+      --rice: #f8f5eb;
+      --green: #557b68;
+      --blue: #496d89;
+      --red: #b85145;
+      --yellow: #e6bc4f;
+      --shadow: rgba(38, 32, 24, 0.22);
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --song: "Songti SC", "SimSun", serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(255,255,255,.78), transparent 26%),
+        linear-gradient(180deg, #f4f2e8 0%, #dfe5dc 100%);
+      color: var(--ink);
+      font-family: var(--body);
+      overflow-x: hidden;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .screen {
+      position: relative;
+      width: min(1280px, calc(100vw - 36px));
+      aspect-ratio: 16 / 9;
+      margin: 0 auto;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.44), transparent 14%, transparent 86%, rgba(255,255,255,.3)),
+        radial-gradient(circle at 50% 42%, #fbfaf3 0%, var(--wash) 64%, #d2dacf 100%);
+      box-shadow: 0 28px 70px rgba(40, 35, 28, .18), inset 0 0 90px rgba(110, 118, 96, .18);
+      isolation: isolate;
+    }
+
+    .screen::after {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      z-index: 80;
+      opacity: .12;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle, rgba(40,38,32,.25) 0 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,.38) 0 1px, transparent 1px);
+      background-size: 29px 31px, 37px 33px;
+      animation: grain 1.8s steps(4) infinite;
+      mix-blend-mode: multiply;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .55s ease;
+    }
+
+    .scene.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .top-brand {
+      position: absolute;
+      top: 16px;
+      right: 18px;
+      z-index: 60;
+      color: rgba(39,35,31,.66);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .caption {
+      position: absolute;
+      left: 50%;
+      bottom: 26px;
+      z-index: 70;
+      width: min(82%, 920px);
+      transform: translateX(-50%);
+      color: #fff;
+      text-align: center;
+      font-size: clamp(18px, 2.2vw, 31px);
+      font-weight: 900;
+      line-height: 1.25;
+      text-shadow:
+        0 3px 0 #222,
+        2px 0 0 #222,
+        -2px 0 0 #222,
+        0 -2px 0 #222,
+        0 8px 18px rgba(0,0,0,.28);
+    }
+
+    .need {
+      position: absolute;
+      z-index: 65;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border: 1px solid rgba(184, 81, 69, .3);
+      border-radius: 999px;
+      background: rgba(255, 250, 240, .86);
+      color: #87382f;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 8px 24px rgba(48, 41, 32, .12);
+      backdrop-filter: blur(10px);
+    }
+
+    .need::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--red);
+    }
+
+    .asset-box {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 18px;
+      border: 2px dashed rgba(82, 76, 67, .46);
+      border-radius: 18px;
+      background: repeating-linear-gradient(-45deg, rgba(255,255,255,.42) 0 10px, rgba(232,227,214,.42) 10px 20px);
+      color: rgba(39,35,31,.75);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.52);
+    }
+
+    .asset-box strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink);
+      font-size: 20px;
+    }
+
+    .asset-box span {
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .table-room {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(38, 28, 20, .18), transparent 36%),
+        radial-gradient(circle at 50% 100%, rgba(72,50,34,.3), transparent 45%),
+        linear-gradient(110deg, #503323, #9e6d43 48%, #2d2525);
+    }
+
+    .window-glow {
+      position: absolute;
+      left: 6%;
+      top: 8%;
+      width: 34%;
+      height: 38%;
+      border-radius: 12px;
+      background:
+        linear-gradient(90deg, rgba(39,35,31,.24) 2px, transparent 2px 33%, rgba(39,35,31,.22) 33% 34%, transparent 34% 66%, rgba(39,35,31,.22) 66% 67%, transparent 67%),
+        linear-gradient(180deg, rgba(39,35,31,.2) 2px, transparent 2px 50%, rgba(39,35,31,.18) 50% 51%, transparent 51%),
+        radial-gradient(circle at 70% 28%, #ffd27d, transparent 20%),
+        linear-gradient(180deg, #7bb1b5, #f3af65 55%, #6d554b);
+      box-shadow: 0 18px 40px rgba(43, 25, 13, .25);
+    }
+
+    .table {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      bottom: 8%;
+      height: 26%;
+      border-radius: 50% 50% 18px 18px / 20% 20% 18px 18px;
+      background:
+        radial-gradient(ellipse at 50% 0, rgba(255,255,255,.22), transparent 52%),
+        linear-gradient(180deg, #9a6844, #5b3925);
+      box-shadow: 0 -10px 30px rgba(255, 200, 130, .12), 0 20px 45px rgba(30,20,12,.38);
+    }
+
+    .character-placeholder {
+      left: 31%;
+      bottom: 27%;
+      width: 18%;
+      height: 42%;
+      transform: rotate(-2deg);
+    }
+
+    .character-placeholder.two {
+      left: auto;
+      right: 26%;
+      transform: rotate(3deg);
+    }
+
+    .steam {
+      position: absolute;
+      left: 48%;
+      bottom: 36%;
+      width: 50px;
+      height: 120px;
+      background:
+        radial-gradient(ellipse at 50% 20%, rgba(255,255,255,.7), transparent 60%),
+        radial-gradient(ellipse at 30% 50%, rgba(255,255,255,.45), transparent 58%);
+      filter: blur(6px);
+      opacity: .8;
+      animation: steam 2.8s ease-in-out infinite;
+    }
+
+    .hero-title {
+      position: absolute;
+      left: 7%;
+      top: 8%;
+      z-index: 10;
+      padding: 16px 20px;
+      border-radius: 12px;
+      background: rgba(255,250,240,.86);
+      box-shadow: 0 14px 40px rgba(40,32,24,.2);
+      transform: rotate(-1deg);
+    }
+
+    .hero-title b {
+      display: block;
+      font-family: var(--song);
+      font-size: clamp(30px, 5vw, 68px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .hero-title span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .paper {
+      position: absolute;
+      background:
+        linear-gradient(90deg, transparent 0 20px, rgba(56,50,44,.07) 20px 21px, transparent 21px),
+        repeating-linear-gradient(180deg, transparent 0 24px, rgba(56,50,44,.09) 24px 25px),
+        var(--paper);
+      border: 4px solid var(--line);
+      border-radius: 16px 22px 17px 19px;
+      box-shadow: 0 24px 55px var(--shadow);
+      clip-path: polygon(2% 4%, 96% 1%, 99% 92%, 94% 99%, 5% 98%, 0 91%);
+    }
+
+    .paper::before {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      border: 2px dashed rgba(40,35,30,.3);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .id-card {
+      left: 31%;
+      top: 16%;
+      width: 38%;
+      height: 56%;
+      padding: 26px 32px;
+      animation: floatIn .9s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .id-card h2 {
+      margin: 0;
+      font-family: var(--song);
+      font-size: clamp(28px, 4vw, 54px);
+    }
+
+    .id-card .profile {
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      gap: 18px;
+      margin-top: 18px;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 38%, #fff 0 20%, transparent 21%),
+        radial-gradient(circle at 50% 55%, #57403f 0 42%, transparent 43%),
+        #ead5b8;
+      border: 3px solid var(--line);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      padding: 7px 10px;
+      border: 1px solid rgba(80,72,62,.22);
+      border-radius: 999px;
+      background: rgba(255,255,255,.6);
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .doc-stack {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      perspective: 1200px;
+    }
+
+    .doc {
+      position: absolute;
+      width: 34%;
+      height: 63%;
+      padding: 28px;
+      opacity: 0;
+      animation: stackCard 8s cubic-bezier(.2,.8,.2,1) infinite both;
+    }
+
+    .doc:nth-child(2) {
+      animation-delay: .8s;
+    }
+
+    .doc:nth-child(3) {
+      animation-delay: 1.55s;
+    }
+
+    .doc h3 {
+      margin: 0 0 18px;
+      font-size: clamp(22px, 3vw, 38px);
+      font-family: var(--song);
+    }
+
+    .doc p {
+      margin: 0 0 12px;
+      line-height: 1.55;
+      color: #50493f;
+    }
+
+    .paper-wad {
+      position: absolute;
+      left: 20%;
+      top: 39%;
+      z-index: 20;
+      width: 86px;
+      aspect-ratio: 1.45;
+      opacity: 0;
+      background:
+        linear-gradient(130deg, transparent 10%, rgba(50,45,44,.16) 11% 13%, transparent 14%),
+        linear-gradient(35deg, transparent 20%, rgba(50,45,44,.13) 21% 23%, transparent 24%),
+        radial-gradient(circle at 34% 36%, #fff 0 18%, #dedbd5 19% 34%, transparent 35%),
+        radial-gradient(circle at 72% 48%, #f9f7f1 0 22%, #cfcac3 23% 44%, transparent 45%),
+        linear-gradient(145deg, #f7f4ee, #bcb7b1);
+      border: 3px solid rgba(62,57,54,.75);
+      clip-path: polygon(4% 48%, 20% 11%, 48% 1%, 72% 17%, 98% 43%, 83% 78%, 55% 96%, 22% 84%);
+      filter: drop-shadow(0 18px 24px rgba(50,45,38,.24));
+      animation: wadSweep 7s cubic-bezier(.2,.75,.1,1) infinite both;
+    }
+
+    .full-doc {
+      position: absolute;
+      left: 9%;
+      top: 10%;
+      width: 82%;
+      height: 76%;
+      padding: 34px 42px;
+      opacity: 0;
+      clip-path: circle(0% at 58% 44%);
+      animation: revealDoc 7s cubic-bezier(.2,.85,.2,1) infinite both;
+    }
+
+    .full-doc h2 {
+      margin: 0 0 18px;
+      font-family: var(--song);
+      font-size: clamp(28px, 4vw, 56px);
+    }
+
+    .list-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px 38px;
+    }
+
+    .line {
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(44,39,34,.62), rgba(44,39,34,.1));
+    }
+
+    .line:nth-child(3n) { width: 68%; }
+    .line:nth-child(4n) { width: 82%; }
+
+    .browser {
+      position: absolute;
+      left: 8%;
+      top: 10%;
+      width: 84%;
+      height: 72%;
+      overflow: hidden;
+      border: 1px solid rgba(56,50,44,.18);
+      border-radius: 16px;
+      background: #fefefe;
+      box-shadow: 0 30px 70px rgba(38,32,24,.2);
+      animation: browserEnter .8s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .browser-bar {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      background: #f1f2ef;
+      border-bottom: 1px solid rgba(56,50,44,.12);
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #d45d54;
+    }
+
+    .dot:nth-child(2) { background: #dfb448; }
+    .dot:nth-child(3) { background: #63a96f; }
+
+    .address {
+      flex: 1;
+      height: 24px;
+      border-radius: 999px;
+      background: #fff;
+      color: #9b968e;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      margin-left: 8px;
+      font-family: var(--mono);
+    }
+
+    .tool-ui {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      height: calc(100% - 42px);
+      background: #fbfaf5;
+    }
+
+    .side {
+      padding: 18px;
+      background: #242a28;
+      color: #f8f3df;
+    }
+
+    .side h3 {
+      margin: 0 0 18px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .nav-item {
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.07);
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .nav-item.active {
+      background: var(--yellow);
+      color: #222;
+      font-weight: 900;
+    }
+
+    .main-ui {
+      padding: 22px 28px;
+      overflow: hidden;
+    }
+
+    .search {
+      display: grid;
+      grid-template-columns: 1fr 130px;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .input {
+      height: 44px;
+      border-radius: 8px;
+      border: 1px solid #ded8ca;
+      background: #fff;
+      padding: 0 14px;
+      color: #8f877b;
+      display: flex;
+      align-items: center;
+    }
+
+    .btn {
+      height: 44px;
+      border-radius: 8px;
+      border: 0;
+      background: var(--green);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .result-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .result {
+      min-height: 168px;
+      padding: 16px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #e7dfcf;
+      box-shadow: 0 10px 24px rgba(40,32,24,.08);
+      animation: resultPop .6s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .result:nth-child(2) { animation-delay: .14s; }
+    .result:nth-child(3) { animation-delay: .28s; }
+
+    .result h4 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .result p {
+      margin: 0;
+      color: #635d53;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .chat-wrap {
+      position: absolute;
+      left: 12%;
+      top: 10%;
+      width: 76%;
+      height: 74%;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 22px;
+    }
+
+    .chat {
+      padding: 24px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.82);
+      box-shadow: 0 26px 60px rgba(38,32,24,.16);
+    }
+
+    .bubble {
+      max-width: 78%;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: #edf1ec;
+      line-height: 1.55;
+      animation: bubbleIn .55s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .bubble.me {
+      margin-left: auto;
+      background: #dce8d7;
+    }
+
+    .bubble:nth-child(2) { animation-delay: .24s; }
+    .bubble:nth-child(3) { animation-delay: .48s; }
+
+    .right-note {
+      position: relative;
+      border-radius: 20px;
+      background: var(--paper);
+      border: 3px solid var(--line);
+      padding: 22px;
+      box-shadow: 0 22px 48px rgba(38,32,24,.16);
+      transform: rotate(1.5deg);
+    }
+
+    .right-note h3 {
+      margin: 0 0 12px;
+      font-family: var(--song);
+      font-size: 28px;
+    }
+
+    .campus {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 58%, rgba(255,255,255,.66), transparent 42%),
+        linear-gradient(180deg, #b8d4de, #e6d2ad 56%, #9ab178);
+    }
+
+    .campus-card {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 42%;
+      height: 42%;
+      transform: translate(-50%, -50%);
+      border-radius: 26px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.72)),
+        radial-gradient(circle at 50% 50%, rgba(85,123,104,.32), transparent 50%);
+      border: 1px solid rgba(60,70,60,.18);
+      box-shadow: 0 30px 80px rgba(35,45,38,.22);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      animation: campusFloat 1.2s ease both;
+    }
+
+    .campus-card b {
+      display: block;
+      font-family: var(--song);
+      font-size: clamp(28px, 4vw, 56px);
+      margin-bottom: 12px;
+    }
+
+    .campus-card span {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .retro-computer {
+      position: absolute;
+      right: 14%;
+      bottom: 12%;
+      width: 170px;
+      height: 132px;
+      border-radius: 12px 12px 6px 6px;
+      background: #e6dfcc;
+      border: 4px solid #4f493e;
+      box-shadow: 0 20px 35px rgba(34,28,20,.22);
+      animation: bob 2.2s ease-in-out infinite;
+    }
+
+    .retro-computer::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 16px;
+      height: 64px;
+      border-radius: 6px;
+      background: #293230;
+      box-shadow: inset 0 0 0 4px #746f62;
+    }
+
+    .retro-computer::after {
+      content: "Skill";
+      position: absolute;
+      left: 50%;
+      top: 34px;
+      transform: translateX(-50%);
+      color: #b4e6c7;
+      font-family: var(--mono);
+      font-size: 15px;
+    }
+
+    .controls {
+      width: min(1280px, calc(100vw - 36px));
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+    }
+
+    .timeline,
+    .asset-panel {
+      border: 1px solid rgba(68,60,50,.14);
+      border-radius: 14px;
+      background: rgba(255,250,240,.82);
+      box-shadow: 0 18px 40px rgba(38,32,24,.08);
+      backdrop-filter: blur(12px);
+    }
+
+    .timeline {
+      padding: 14px;
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .timeline-header strong {
+      font-size: 16px;
+    }
+
+    .timeline-header button {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(44,39,34,.2);
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .scene-buttons {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .scene-button {
+      min-height: 54px;
+      border: 1px solid rgba(44,39,34,.16);
+      border-radius: 10px;
+      background: rgba(255,255,255,.68);
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+      padding: 9px 10px;
+    }
+
+    .scene-button.active {
+      background: #26302d;
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .scene-button span {
+      display: block;
+      color: inherit;
+      opacity: .7;
+      font-size: 11px;
+      margin-bottom: 3px;
+      font-family: var(--mono);
+    }
+
+    .asset-panel {
+      padding: 16px;
+    }
+
+    .asset-panel h2 {
+      margin: 0 0 10px;
+      font-size: 17px;
+    }
+
+    .asset-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.62;
+    }
+
+    .asset-list strong {
+      color: var(--ink);
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        padding: 12px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+        width: calc(100vw - 24px);
+      }
+
+      .screen {
+        width: calc(100vw - 24px);
+      }
+
+      .scene-buttons {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .tool-ui {
+        grid-template-columns: 150px 1fr;
+      }
+
+      .result-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .right-note {
+        display: none;
+      }
+    }
+
+    @keyframes grain {
+      0% { transform: translate(0,0); }
+      25% { transform: translate(-2%,1%); }
+      50% { transform: translate(1%,-2%); }
+      75% { transform: translate(2%,2%); }
+      100% { transform: translate(0,0); }
+    }
+
+    @keyframes steam {
+      0%, 100% { transform: translateY(0) scale(.86); opacity: .35; }
+      50% { transform: translateY(-28px) scale(1.15); opacity: .78; }
+    }
+
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(32px) rotate(-4deg) scale(.88); }
+      to { opacity: 1; transform: translateY(0) rotate(-1deg) scale(1); }
+    }
+
+    @keyframes stackCard {
+      0%, 8% { opacity: 0; transform: translate(160px, 26px) rotate(7deg) scale(.7); filter: blur(3px); }
+      22%, 62% { opacity: 1; transform: translate(0, 0) rotate(-1deg) scale(1); filter: blur(0); }
+      74%, 100% { opacity: 0; transform: translate(-80px, 0) rotate(-2deg) scale(.96); }
+    }
+
+    @keyframes wadSweep {
+      0%, 8% { opacity: 0; transform: translate(-70px, 12px) rotate(-20deg) scale(.45); }
+      12% { opacity: 1; transform: translate(0, 0) rotate(-8deg) scale(.78); }
+      28% { opacity: 1; transform: translate(245px, -38px) rotate(8deg) scale(2.4); }
+      36% { opacity: 0; transform: translate(310px, 0) rotate(15deg) scale(3); }
+      58% { opacity: 0; transform: translate(520px, 20px) rotate(-8deg) scale(.7); }
+      65% { opacity: 1; transform: translate(520px, 20px) rotate(-8deg) scale(.8); }
+      78% { opacity: 1; transform: translate(350px, -20px) rotate(14deg) scale(6); }
+      86%, 100% { opacity: 0; transform: translate(280px, -26px) rotate(18deg) scale(7.5); }
+    }
+
+    @keyframes revealDoc {
+      0%, 62% { opacity: 0; clip-path: circle(0% at 58% 44%); transform: scale(.985); }
+      66% { opacity: 1; clip-path: circle(12% at 58% 44%); }
+      82%, 100% { opacity: 1; clip-path: circle(104% at 58% 44%); transform: scale(1); }
+    }
+
+    @keyframes browserEnter {
+      from { opacity: 0; transform: translateY(34px) scale(.96); filter: blur(5px); }
+      to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+
+    @keyframes resultPop {
+      from { opacity: 0; transform: translateY(18px) scale(.94); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: translateY(20px) scale(.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes campusFloat {
+      from { opacity: 0; transform: translate(-50%, -44%) scale(.9); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <main class="screen" aria-label="HTML video prototype">
+      <div class="top-brand">HTML 原型 / 大学 Skill 视频</div>
+
+      <section class="scene active" data-scene="0">
+        <div class="table-room"></div>
+        <div class="window-glow"></div>
+        <div class="table"></div>
+        <div class="steam"></div>
+        <div class="hero-title">
+          <b>大学 Skill</b>
+          <span>从资料到可演示的开源工具</span>
+        </div>
+        <div class="asset-box character-placeholder">
+          <div><strong>需补人物图</strong><span>女孩坐姿/餐馆对话<br>透明 PNG 或 16:9 场景图</span></div>
+        </div>
+        <div class="asset-box character-placeholder two">
+          <div><strong>需补人物图</strong><span>同桌人物/同学<br>最好与原视频风格一致</span></div>
+        </div>
+        <div class="need" style="left:31%;top:21%;">补：餐馆完整背景或人物动画</div>
+        <p class="caption">开场人物剧情不能纯靠 HTML，建议补 AI 动画镜头</p>
+      </section>
+
+      <section class="scene" data-scene="1">
+        <article class="paper id-card">
+          <h2>伪人档案</h2>
+          <div class="profile">
+            <div class="avatar"></div>
+            <div>
+              <p><strong>姓名：</strong>小城同学</p>
+              <p><strong>标签：</strong>高考、专业、城市、校园生活</p>
+              <div class="chip-row">
+                <span class="chip">信息炼化</span>
+                <span class="chip">Skill</span>
+                <span class="chip">大学画像</span>
+                <span class="chip">开源</span>
+              </div>
+            </div>
+          </div>
+        </article>
+        <div class="need" style="left:58%;top:17%;">可补：原视频手绘卡片纹理</div>
+        <p class="caption">这种资料卡、身份卡、标签卡可以完全用 HTML 生成</p>
+      </section>
+
+      <section class="scene" data-scene="2">
+        <div class="doc-stack">
+          <article class="paper doc">
+            <h3>学校列表</h3>
+            <p>清华大学 / 北京大学 / 浙江大学 / 复旦大学 / 南京大学 / 武汉大学 / 中山大学</p>
+            <p>按城市、专业、校园氛围、生活方式建立索引。</p>
+          </article>
+          <article class="paper doc">
+            <h3>专业画像</h3>
+            <p>计算机、临床医学、法学、自动化、新闻传播、建筑、金融。</p>
+            <p>输出适合人群、学习压力、就业方向。</p>
+          </article>
+          <article class="paper doc">
+            <h3>Skill 入口</h3>
+            <p>把结构化资料变成模型可调用的上下文。</p>
+            <p>面向问答、推荐、解释、对比。</p>
+          </article>
+        </div>
+        <div class="need" style="left:64%;top:73%;">补：真实大学资料截图会更可信</div>
+        <p class="caption">多张资料页滑入、叠放、漂浮，HTML 很适合做</p>
+      </section>
+
+      <section class="scene" data-scene="3">
+        <article class="paper full-doc">
+          <h2>全国高校 Skill 数据页</h2>
+          <div class="list-grid">
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+            <span class="line"></span><span class="line"></span>
+          </div>
+        </article>
+        <div class="paper-wad"></div>
+        <div class="need" style="left:11%;top:12%;">可补：皱纸/撕纸 PNG，效果会更像原片</div>
+        <p class="caption">2:07 的纸团展开/撕纸出现动画，可用 HTML 遮罩实现</p>
+      </section>
+
+      <section class="scene" data-scene="4">
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <div class="address">localhost:5173/university-skill</div>
+          </div>
+          <div class="tool-ui">
+            <aside class="side">
+              <h3>UNIV SKILL</h3>
+              <div class="nav-item active">01 学校画像</div>
+              <div class="nav-item">02 专业对比</div>
+              <div class="nav-item">03 城市生活</div>
+              <div class="nav-item">04 志愿问答</div>
+            </aside>
+            <section class="main-ui">
+              <div class="search">
+                <div class="input">输入：喜欢海边、计算机、生活松弛...</div>
+                <button class="btn">生成画像</button>
+              </div>
+              <div class="result-cards">
+                <article class="result"><h4>厦门大学</h4><p>海边校园、生活感强，适合重视城市体验和综合氛围的人。</p></article>
+                <article class="result"><h4>中山大学</h4><p>城市资源强，校区多，适合希望兼顾专业和发展机会的人。</p></article>
+                <article class="result"><h4>大连理工</h4><p>工科基础扎实，城市节奏相对舒展，适合技术路线。</p></article>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div class="need" style="left:8%;top:85%;">可用真网页替换这套模拟 UI</div>
+        <p class="caption">网页工具、搜索、按钮、结果卡，建议直接用 HTML 做真界面</p>
+      </section>
+
+      <section class="scene" data-scene="5">
+        <div class="chat-wrap">
+          <div class="chat">
+            <div class="bubble me">我想找一个不那么卷、城市舒服、计算机还可以的学校。</div>
+            <div class="bubble">可以。先问你三个偏好：城市、预算、是否接受跨省。</div>
+            <div class="bubble me">接受跨省，希望校园氛围轻松一点。</div>
+          </div>
+          <article class="right-note">
+            <h3>Skill 回答结构</h3>
+            <p>结论 / 适合人群 / 风险 / 替代选择 / 下一步问题。</p>
+          </article>
+        </div>
+        <div class="need" style="left:61%;top:13%;">补：真实聊天截图或完整对话文案</div>
+        <p class="caption">聊天界面可以 HTML 生成，但真实对话内容需要你补</p>
+      </section>
+
+      <section class="scene" data-scene="6">
+        <div class="campus"></div>
+        <div class="campus-card">
+          <div>
+            <b>校园画像生成</b>
+            <span>城市、专业、性格、未来路径</span>
+          </div>
+        </div>
+        <div class="retro-computer"></div>
+        <div class="asset-box" style="left:8%;bottom:15%;width:24%;height:32%;">
+          <div><strong>需补校园图</strong><span>大学建筑/校园航拍/校门<br>16:9 横图或 AI 插画</span></div>
+        </div>
+        <div class="need" style="left:8%;top:12%;">补：真实或 AI 校园场景图</div>
+        <p class="caption">校园、人物、复古电脑场景建议用图片，HTML 负责合成和镜头运动</p>
+      </section>
+    </main>
+
+    <section class="controls">
+      <div class="timeline">
+        <div class="timeline-header">
+          <strong>场景时间线</strong>
+          <button id="play" aria-label="播放或暂停">▶</button>
+        </div>
+        <div class="scene-buttons" id="sceneButtons"></div>
+      </div>
+
+      <aside class="asset-panel">
+        <h2>你需要补充的素材</h2>
+        <ol class="asset-list">
+          <li><strong>人物角色：</strong>女孩正面、坐姿、讲解、看电脑、对话，最好透明 PNG 或同风格 16:9 图。</li>
+          <li><strong>剧情背景：</strong>餐馆、书房、校园、教室、桌面，横屏 16:9，越高清越好。</li>
+          <li><strong>真实截图：</strong>大学 Skill 页面、GitHub/开源页、聊天页面、大学资料表。</li>
+          <li><strong>纸张素材：</strong>皱纸、撕纸边框、纸团 PNG。没有也能代码模拟，有素材更像原视频。</li>
+          <li><strong>口播字幕：</strong>完整文案或每段字幕，我可以把时间轴卡到每句话。</li>
+        </ol>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    const scenes = [
+      { time: "0:00", name: "餐馆开场", note: "需人物/背景" },
+      { time: "0:12", name: "资料卡", note: "HTML 可生成" },
+      { time: "1:20", name: "文档叠入", note: "HTML 可生成" },
+      { time: "2:07", name: "纸团展开", note: "HTML 可生成" },
+      { time: "2:28", name: "工具界面", note: "HTML 可生成" },
+      { time: "3:05", name: "聊天问答", note: "补文案/截图" },
+      { time: "4:10", name: "校园收尾", note: "需校园图" }
+    ];
+
+    const sceneEls = [...document.querySelectorAll(".scene")];
+    const buttonWrap = document.querySelector("#sceneButtons");
+    const playButton = document.querySelector("#play");
+    let current = 0;
+    let playing = false;
+    let timer = null;
+
+    function setScene(index) {
+      current = index;
+      sceneEls.forEach((scene, i) => {
+        scene.classList.toggle("active", i === index);
+        if (i === index) {
+          scene.style.animation = "none";
+          void scene.offsetWidth;
+          scene.style.animation = "";
+        }
+      });
+      [...buttonWrap.children].forEach((button, i) => {
+        button.classList.toggle("active", i === index);
+      });
+    }
+
+    function schedule() {
+      clearTimeout(timer);
+      if (!playing) return;
+      timer = setTimeout(() => {
+        setScene((current + 1) % scenes.length);
+        schedule();
+      }, 6500);
+    }
+
+    scenes.forEach((scene, index) => {
+      const button = document.createElement("button");
+      button.className = "scene-button" + (index === 0 ? " active" : "");
+      button.innerHTML = `<span>${scene.time} · ${scene.note}</span>${scene.name}`;
+      button.addEventListener("click", () => {
+        setScene(index);
+        schedule();
+      });
+      buttonWrap.appendChild(button);
+    });
+
+    playButton.addEventListener("click", () => {
+      playing = !playing;
+      playButton.textContent = playing ? "Ⅱ" : "▶";
+      schedule();
+    });
+  </script>
+</body>
+</html>

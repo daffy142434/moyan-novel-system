@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文案对比工具 - 语义分析版</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card.semantic {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .stat-card.character {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-desc {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .comparison-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .text-column {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #fafafa;
+        }
+        
+        .text-column h2 {
+            margin-top: 0;
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .text-content {
+            line-height: 1.8;
+            font-size: 16px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .same-text {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .different-text {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        
+        .legend-same {
+            background-color: #d4edda;
+        }
+        
+        .legend-different {
+            background-color: #f8d7da;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .input-column {
+            flex: 1;
+        }
+        
+        .input-column label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .input-column textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        
+        .compare-button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .compare-button:hover {
+            background-color: #0056b3;
+        }
+        
+        .result-section {
+            display: none;
+        }
+        
+        .analysis-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .analysis-section h3 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .analysis-item {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .analysis-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison-container,
+            .input-container {
+                flex-direction: column;
+            }
+            
+            .legend {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>文案对比工具 - 语义分析版</h1>
+        
+        <div class="input-section">
+            <div class="input-container">
+                <div class="input-column">
+                    <label for="text1">文案1:</label>
+                    <textarea id="text1" placeholder="请输入第一个文案..."></textarea>
+                </div>
+                <div class="input-column">
+                    <label for="text2">文案2:</label>
+                    <textarea id="text2" placeholder="请输入第二个文案..."></textarea>
+                </div>
+            </div>
+            <button class="compare-button" onclick="compareTexts()">开始对比</button>
+        </div>
+        
+        <div class="result-section" id="resultSection">
+            <div class="stats-container">
+                <div class="stat-card semantic">
+                    <div class="stat-label">语义相似度</div>
+                    <div class="stat-value" id="semanticSimilarity">0%</div>
+                    <div class="stat-desc">基于词义和语境分析</div>
+                </div>
+                <div class="stat-card character">
+                    <div class="stat-label">字符相似度</div>
+                    <div class="stat-value" id="characterSimilarity">0%</div>
+                    <div class="stat-desc">基于逐字对比</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">总体差异度</div>
+                    <div class="stat-value" id="overallDifference">0%</div>
+                    <div class="stat-desc">综合评估结果</div>
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <h3>📊 详细分析</h3>
+                <div class="analysis-item">
+                    <span class="analysis-label">文案1字数：</span>
+                    <span id="text1Length">0</span> 字
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">文案2字数：</span>
+                    <span id="text2Length">0</span> 字
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">共同关键词：</span>
+                    <span id="commonKeywords">无</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">独特关键词1：</span>
+                    <span id="uniqueKeywords1">无</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">独特关键词2：</span>
+                    <span id="uniqueKeywords2">无</span>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color legend-same"></div>
+                    <span>相同部分</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-different"></div>
+                    <span>不同部分</span>
+                </div>
+            </div>
+            
+            <div class="comparison-container">
+                <div class="text-column">
+                    <h2>文案1</h2>
+                    <div class="text-content" id="result1"></div>
+                </div>
+                <div class="text-column">
+                    <h2>文案2</h2>
+                    <div class="text-content" id="result2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function compareTexts() {
+            const text1 = document.getElementById('text1').value;
+            const text2 = document.getElementById('text2').value;
+            
+            if (!text1.trim() || !text2.trim()) {
+                alert('请输入两个文案内容！');
+                return;
+            }
+            
+            // 字符级对比
+            const charResult = diffTexts(text1, text2);
+            document.getElementById('result1').innerHTML = charResult.text1;
+            document.getElementById('result2').innerHTML = charResult.text2;
+            
+            // 计算相似度
+            const similarities = calculateSimilarities(text1, text2);
+            
+            // 更新统计数据
+            document.getElementById('semanticSimilarity').textContent = similarities.semantic + '%';
+            document.getElementById('characterSimilarity').textContent = similarities.character + '%';
+            document.getElementById('overallDifference').textContent = similarities.difference + '%';
+            
+            // 更新详细分析
+            document.getElementById('text1Length').textContent = text1.length;
+            document.getElementById('text2Length').textContent = text2.length;
+            document.getElementById('commonKeywords').textContent = similarities.commonKeywords.join('、') || '无';
+            document.getElementById('uniqueKeywords1').textContent = similarities.uniqueKeywords1.join('、') || '无';
+            document.getElementById('uniqueKeywords2').textContent = similarities.uniqueKeywords2.join('、') || '无';
+            
+            document.getElementById('resultSection').style.display = 'block';
+            
+            // 滚动到结果区域
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function calculateSimilarities(text1, text2) {
+            // 1. 字符相似度（基于LCS）
+            const lcs = findLCS(text1, text2);
+            const charSimilarity = Math.round((lcs.length * 2 / (text1.length + text2.length)) * 100);
+            
+            // 2. 语义相似度（基于分词和词汇匹配）
+            const words1 = segmentText(text1);
+            const words2 = segmentText(text2);
+            
+            // 计算Jaccard相似度
+            const set1 = new Set(words1);
+            const set2 = new Set(words2);
+            const intersection = new Set([...set1].filter(x => set2.has(x)));
+            const union = new Set([...set1, ...set2]);
+            
+            const jaccardSimilarity = union.size > 0 ? (intersection.size / union.size) : 0;
+            
+            // 计算余弦相似度（基于词频）
+            const cosineSimilarity = calculateCosineSimilarity(words1, words2);
+            
+            // 综合语义相似度（Jaccard和余弦相似度的平均值）
+            const semanticSimilarity = Math.round(((jaccardSimilarity + cosineSimilarity) / 2) * 100);
+            
+            // 3. 总体差异度（综合字符和语义）
+            const overallSimilarity = Math.round((charSimilarity + semanticSimilarity) / 2);
+            const overallDifference = 100 - overallSimilarity;
+            
+            // 4. 关键词分析
+            const commonKeywords = [...intersection].filter(w => w.length >= 2).slice(0, 10);
+            const uniqueKeywords1 = [...set1].filter(x => !set2.has(x) && x.length >= 2).slice(0, 10);
+            const uniqueKeywords2 = [...set2].filter(x => !set1.has(x) && x.length >= 2).slice(0, 10);
+            
+            return {
+                character: charSimilarity,
+                semantic: semanticSimilarity,
+                difference: overallDifference,
+                commonKeywords: commonKeywords,
+                uniqueKeywords1: uniqueKeywords1,
+                uniqueKeywords2: uniqueKeywords2
+            };
+        }
+        
+        function segmentText(text) {
+            // 简单的中文分词（基于常见词长度和标点符号）
+            const words = [];
+            const punctuation = /[，。！？；：、""''《》【】（）,.!?;:'"<>[\]()]/g;
+            
+            // 移除标点符号
+            text = text.replace(punctuation, ' ');
+            
+            // 尝试识别2-4字的词组
+            for (let len = 4; len >= 2; len--) {
+                for (let i = 0; i <= text.length - len; i++) {
+                    const word = text.substr(i, len);
+                    if (!/\s/.test(word)) {
+                        words.push(word);
+                    }
+                }
+            }
+            
+            // 添加单字
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (!/\s/.test(char)) {
+                    words.push(char);
+                }
+            }
+            
+            return words;
+        }
+        
+        function calculateCosineSimilarity(words1, words2) {
+            // 构建词频向量
+            const allWords = new Set([...words1, ...words2]);
+            const vector1 = {};
+            const vector2 = {};
+            
+            allWords.forEach(word => {
+                vector1[word] = words1.filter(w => w === word).length;
+                vector2[word] = words2.filter(w => w === word).length;
+            });
+            
+            // 计算余弦相似度
+            let dotProduct = 0;
+            let magnitude1 = 0;
+            let magnitude2 = 0;
+            
+            allWords.forEach(word => {
+                dotProduct += vector1[word] * vector2[word];
+                magnitude1 += vector1[word] * vector1[word];
+                magnitude2 += vector2[word] * vector2[word];
+            });
+            
+            magnitude1 = Math.sqrt(magnitude1);
+            magnitude2 = Math.sqrt(magnitude2);
+            
+            if (magnitude1 === 0 || magnitude2 === 0) return 0;
+            
+            return dotProduct / (magnitude1 * magnitude2);
+        }
+        
+        function diffTexts(text1, text2) {
+            const result1 = buildDiffText(text1, text2, true);
+            const result2 = buildDiffText(text2, text1, false);
+            
+            return {
+                text1: result1,
+                text2: result2
+            };
+        }
+        
+        function buildDiffText(text1, text2, isFirst) {
+            const lcs = findLCS(text1, text2);
+            
+            let result = '';
+            let textIndex = 0;
+            let lcsIndex = 0;
+            let inSame = false;
+            let inDiff = false;
+            
+            while (textIndex < text1.length) {
+                let isSame = false;
+                
+                if (lcsIndex < lcs.length && 
+                    textIndex === lcs[lcsIndex].pos1) {
+                    isSame = true;
+                    lcsIndex++;
+                }
+                
+                const char = text1[textIndex];
+                
+                if (isSame && !inSame) {
+                    if (inDiff) {
+                        result += '</span>';
+                        inDiff = false;
+                    }
+                    result += '<span class="same-text">';
+                    inSame = true;
+                } else if (!isSame && !inDiff) {
+                    if (inSame) {
+                        result += '</span>';
+                        inSame = false;
+                    }
+                    result += '<span class="different-text">';
+                    inDiff = true;
+                }
+                
+                result += escapeHtml(char);
+                textIndex++;
+            }
+            
+            if (inSame || inDiff) {
+                result += '</span>';
+            }
+            
+            return result;
+        }
+        
+        function findLCS(text1, text2) {
+            const m = text1.length;
+            const n = text2.length;
+            
+            const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
+            
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (text1[i-1] === text2[j-1]) {
+                        dp[i][j] = dp[i-1][j-1] + 1;
+                    } else {
+                        dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+                    }
+                }
+            }
+            
+            const lcs = [];
+            let i = m, j = n;
+            
+            while (i > 0 && j > 0) {
+                if (text1[i-1] === text2[j-1]) {
+                    lcs.unshift({
+                        char: text1[i-1],
+                        pos1: i-1,
+                        pos2: j-1
+                    });
+                    i--;
+                    j--;
+                } else if (dp[i-1][j] > dp[i][j-1]) {
+                    i--;
+                } else {
+                    j--;
+                }
+            }
+            
+            return lcs;
+        }
+        
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+    </script>
+</body>
+</html>
+
+

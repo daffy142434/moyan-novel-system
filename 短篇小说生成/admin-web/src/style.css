@@ -1,0 +1,60 @@
+body {
+  margin: 0;
+  background: #f5f7fb;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #f5f7fb;
+}
+
+.login-card {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.brand .anticon {
+  color: #722ed1;
+  font-size: 22px;
+}
+
+.admin-shell {
+  min-height: 100vh;
+}
+
+.admin-header {
+  height: 64px;
+  background: #fff;
+  border-bottom: 1px solid #e5e8ef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.admin-sider {
+  background: #fff !important;
+  border-right: 1px solid #e5e8ef;
+  padding-top: 16px;
+}
+
+.admin-sider .ant-menu {
+  border-inline-end: 0 !important;
+}
+
+.admin-content {
+  padding: 24px;
+}

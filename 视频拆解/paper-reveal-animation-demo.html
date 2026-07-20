@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paper Reveal Animation Demo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #24201d;
+      --paper: #fffdf6;
+      --paper-edge: #4d4740;
+      --wash: #eef0e9;
+      --shadow: rgba(42, 37, 30, 0.2);
+      --accent: #8c7b65;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(255,255,255,0.85), transparent 30%),
+        linear-gradient(180deg, #f5f5ef 0%, #e7e9df 100%);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    .stage {
+      position: relative;
+      width: min(96vw, 1120px);
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.34), transparent 18%, transparent 82%, rgba(255,255,255,0.28)),
+        radial-gradient(circle at 50% 40%, #fafaf5 0%, var(--wash) 62%, #dfe2d7 100%);
+      box-shadow: inset 0 0 80px rgba(120, 120, 100, 0.18);
+      isolation: isolate;
+    }
+
+    .film-grain {
+      position: absolute;
+      inset: -20%;
+      pointer-events: none;
+      opacity: 0.18;
+      background-image:
+        radial-gradient(circle, rgba(40,40,35,0.22) 0 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,0.32) 0 1px, transparent 1px);
+      background-size: 26px 24px, 31px 29px;
+      animation: grain 1.6s steps(4, end) infinite;
+      mix-blend-mode: multiply;
+      z-index: 20;
+    }
+
+    .cards {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      perspective: 1200px;
+      z-index: 2;
+    }
+
+    .doc-card {
+      position: absolute;
+      width: min(46vw, 480px);
+      aspect-ratio: 0.74;
+      padding: 30px 32px 24px;
+      background:
+        linear-gradient(90deg, transparent 0 21px, rgba(70,70,60,0.08) 21px 22px, transparent 22px),
+        repeating-linear-gradient(180deg, transparent 0 26px, rgba(48,48,42,0.1) 26px 27px),
+        var(--paper);
+      border: 4px solid var(--paper-edge);
+      border-radius: 15px 22px 17px 20px;
+      box-shadow: 0 24px 50px var(--shadow);
+      clip-path: polygon(2% 4%, 96% 1%, 99% 93%, 94% 99%, 5% 98%, 0 91%);
+      transform-origin: center;
+      opacity: 0;
+      filter: saturate(0.95);
+    }
+
+    .doc-card::before {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      border: 2px dashed rgba(33, 31, 27, 0.34);
+      border-radius: inherit;
+      clip-path: inherit;
+      pointer-events: none;
+    }
+
+    .doc-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(80, 70, 60, 0.08), transparent 16%),
+        radial-gradient(circle at 88% 78%, rgba(80, 70, 60, 0.06), transparent 20%);
+      pointer-events: none;
+    }
+
+    .doc-card h2 {
+      margin: 0 0 18px;
+      font-size: clamp(17px, 2.4vw, 28px);
+      letter-spacing: 0;
+    }
+
+    .doc-card p,
+    .doc-card li {
+      font-size: clamp(10px, 1vw, 13px);
+      line-height: 1.56;
+      margin: 0;
+      color: #37332d;
+    }
+
+    .doc-card ul {
+      columns: 2;
+      column-gap: 28px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .doc-card .rule {
+      height: 8px;
+      width: 72%;
+      margin: 14px 0 18px;
+      background: linear-gradient(90deg, #e4dfd2, transparent);
+      border-radius: 999px;
+    }
+
+    .card-a {
+      animation: cardA 8s cubic-bezier(.2,.8,.2,1) infinite both;
+    }
+
+    .card-b {
+      transform: translate(74px, 18px) rotate(1deg) scale(0.94);
+      animation: cardB 8s cubic-bezier(.2,.8,.2,1) infinite both;
+    }
+
+    .card-c {
+      transform: translate(124px, 38px) rotate(2.4deg) scale(0.9);
+      animation: cardC 8s cubic-bezier(.2,.8,.2,1) infinite both;
+    }
+
+    .paper-wad {
+      position: absolute;
+      left: 19%;
+      top: 38%;
+      width: 92px;
+      aspect-ratio: 1.45;
+      z-index: 8;
+      opacity: 0;
+      background:
+        linear-gradient(130deg, transparent 10%, rgba(50,45,44,0.16) 11% 13%, transparent 14%),
+        linear-gradient(35deg, transparent 20%, rgba(50,45,44,0.13) 21% 23%, transparent 24%),
+        radial-gradient(circle at 34% 36%, #ffffff 0 18%, #dedbd5 19% 34%, transparent 35%),
+        radial-gradient(circle at 72% 48%, #f9f7f1 0 22%, #cfcac3 23% 44%, transparent 45%),
+        linear-gradient(145deg, #f7f4ee, #bcb7b1);
+      border: 3px solid rgba(62, 57, 54, 0.75);
+      clip-path: polygon(4% 48%, 20% 11%, 48% 1%, 72% 17%, 98% 43%, 83% 78%, 55% 96%, 22% 84%);
+      filter: drop-shadow(0 18px 24px rgba(50,45,38,0.24));
+      transform-origin: center;
+      animation: wadSweep 8s cubic-bezier(.2,.7,.1,1) infinite both;
+    }
+
+    .paper-wad.big {
+      z-index: 10;
+      left: 46%;
+      top: 38%;
+      width: 160px;
+      animation: bigWadReveal 8s cubic-bezier(.2,.8,.2,1) infinite both;
+    }
+
+    .reveal-matte {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+    }
+
+    .full-doc {
+      width: min(84vw, 920px);
+      height: 76%;
+      padding: 32px 42px;
+      background:
+        repeating-linear-gradient(180deg, transparent 0 24px, rgba(48,48,42,0.09) 24px 25px),
+        var(--paper);
+      border: 4px solid var(--paper-edge);
+      border-radius: 18px;
+      box-shadow: 0 28px 70px rgba(54, 48, 40, 0.2);
+      clip-path: circle(0% at 55% 44%);
+      animation: fullDocReveal 8s cubic-bezier(.2,.85,.2,1) infinite both;
+    }
+
+    .full-doc h1 {
+      font-size: clamp(18px, 3vw, 36px);
+      margin: 0 0 18px;
+      letter-spacing: 0;
+    }
+
+    .full-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 36px;
+    }
+
+    .line {
+      height: 10px;
+      background: linear-gradient(90deg, rgba(50,45,40,0.6), rgba(50,45,40,0.1));
+      border-radius: 999px;
+      opacity: 0.7;
+    }
+
+    .line:nth-child(3n) {
+      width: 78%;
+    }
+
+    .line:nth-child(4n) {
+      width: 58%;
+    }
+
+    .caption {
+      position: absolute;
+      left: 50%;
+      bottom: 34px;
+      transform: translateX(-50%);
+      z-index: 30;
+      width: min(78%, 860px);
+      text-align: center;
+      color: #ffffff;
+      font-size: clamp(18px, 2.8vw, 34px);
+      font-weight: 800;
+      letter-spacing: 0;
+      text-shadow:
+        0 3px 0 #1f1f1f,
+        2px 0 0 #1f1f1f,
+        -2px 0 0 #1f1f1f,
+        0 -2px 0 #1f1f1f,
+        0 8px 18px rgba(0,0,0,0.26);
+    }
+
+    .replay {
+      position: absolute;
+      right: 18px;
+      top: 18px;
+      z-index: 40;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(36,32,29,0.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.74);
+      color: #26221e;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(50,45,38,0.12);
+    }
+
+    .replay svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .stage.restart * {
+      animation-name: none !important;
+    }
+
+    @keyframes cardA {
+      0%, 8% { opacity: 0; transform: translate(-170px, -24px) rotate(-11deg) scale(0.18); filter: blur(4px); }
+      18% { opacity: 1; transform: translate(-28px, -16px) rotate(-1deg) scale(0.78); filter: blur(0); }
+      28%, 43% { opacity: 1; transform: translate(-72px, -10px) rotate(-1.3deg) scale(0.86); }
+      55% { opacity: 1; transform: translate(-112px, 0) rotate(-2.2deg) scale(0.9); }
+      62%, 100% { opacity: 0; transform: translate(-128px, 0) rotate(-2deg) scale(0.95); }
+    }
+
+    @keyframes cardB {
+      0%, 20% { opacity: 0; transform: translate(120px, 28px) rotate(6deg) scale(0.7); filter: blur(3px); }
+      32%, 50% { opacity: 1; transform: translate(26px, 10px) rotate(1deg) scale(0.88); filter: blur(0); }
+      58% { opacity: 1; transform: translate(-8px, 12px) rotate(0.8deg) scale(0.92); }
+      62%, 100% { opacity: 0; transform: translate(-32px, 12px) rotate(1deg) scale(0.94); }
+    }
+
+    @keyframes cardC {
+      0%, 33% { opacity: 0; transform: translate(170px, 58px) rotate(8deg) scale(0.7); filter: blur(3px); }
+      45%, 56% { opacity: 1; transform: translate(80px, 32px) rotate(2.4deg) scale(0.86); filter: blur(0); }
+      62%, 100% { opacity: 0; transform: translate(42px, 28px) rotate(2deg) scale(0.9); }
+    }
+
+    @keyframes wadSweep {
+      0%, 6% { opacity: 0; transform: translate(-60px, 16px) rotate(-24deg) scale(0.48); }
+      10% { opacity: 1; transform: translate(0, 0) rotate(-10deg) scale(0.76); }
+      18% { opacity: 1; transform: translate(176px, -36px) rotate(8deg) scale(2.3); }
+      24% { opacity: 0; transform: translate(236px, 2px) rotate(14deg) scale(2.9); }
+      36% { opacity: 0; transform: translate(260px, 40px) rotate(0deg) scale(0.6); }
+      42% { opacity: 1; transform: translate(480px, 64px) rotate(-13deg) scale(0.72); }
+      49% { opacity: 1; transform: translate(610px, 8px) rotate(8deg) scale(2.25); }
+      54%, 100% { opacity: 0; transform: translate(650px, -10px) rotate(16deg) scale(2.8); }
+    }
+
+    @keyframes bigWadReveal {
+      0%, 48% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.35); }
+      53% { opacity: 1; transform: translate(40px, 20px) rotate(-14deg) scale(0.8); }
+      58% { opacity: 1; transform: translate(-20px, -8px) rotate(8deg) scale(2.4); }
+      62% { opacity: 0.75; transform: translate(-80px, -12px) rotate(14deg) scale(5.8); }
+      68%, 100% { opacity: 0; transform: translate(-90px, -22px) rotate(18deg) scale(7.4); }
+    }
+
+    @keyframes fullDocReveal {
+      0%, 52% { opacity: 0; clip-path: circle(0% at 58% 45%); transform: scale(0.98); }
+      55% { opacity: 1; clip-path: circle(12% at 58% 45%); transform: scale(0.985); }
+      63% { opacity: 1; clip-path: circle(96% at 58% 45%); transform: scale(1); }
+      100% { opacity: 1; clip-path: circle(96% at 58% 45%); transform: scale(1); }
+    }
+
+    @keyframes grain {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-2%, 1%); }
+      50% { transform: translate(1%, -2%); }
+      75% { transform: translate(2%, 2%); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @media (max-width: 720px) {
+      .stage {
+        width: 100vw;
+        min-height: 100vh;
+        aspect-ratio: auto;
+      }
+
+      .doc-card {
+        width: 72vw;
+      }
+
+      .full-doc {
+        width: 92vw;
+        height: 70vh;
+      }
+
+      .full-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" id="stage">
+    <button class="replay" id="replay" aria-label="Replay animation" title="Replay">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 4v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5.6 14.5A7 7 0 1 0 7.8 7.8L4 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <section class="cards" aria-label="Animated document cards">
+      <article class="doc-card card-a">
+        <h2>高校资料库</h2>
+        <div class="rule"></div>
+        <p>把学校、专业、城市、招生、生活方式整理成可检索资料。</p>
+        <ul>
+          <li>北京大学</li>
+          <li>清华大学</li>
+          <li>复旦大学</li>
+          <li>浙江大学</li>
+          <li>南京大学</li>
+          <li>武汉大学</li>
+          <li>厦门大学</li>
+          <li>中山大学</li>
+        </ul>
+      </article>
+
+      <article class="doc-card card-b">
+        <h2>Skill 索引</h2>
+        <div class="rule"></div>
+        <p>按地区、学科、标签、校园气质建立上下文入口。</p>
+        <ul>
+          <li>城市画像</li>
+          <li>专业方向</li>
+          <li>宿舍生活</li>
+          <li>就业去向</li>
+          <li>社团氛围</li>
+          <li>食堂口碑</li>
+          <li>校园地图</li>
+          <li>校友印象</li>
+        </ul>
+      </article>
+
+      <article class="doc-card card-c">
+        <h2>问答模板</h2>
+        <div class="rule"></div>
+        <p>输入考生偏好，生成更像咨询师的学校解释。</p>
+        <ul>
+          <li>适合谁</li>
+          <li>为什么</li>
+          <li>注意点</li>
+          <li>替代选择</li>
+          <li>申请建议</li>
+          <li>生活提醒</li>
+        </ul>
+      </article>
+    </section>
+
+    <div class="reveal-matte">
+      <article class="full-doc">
+        <h1>全国高校 Skill 数据页</h1>
+        <div class="full-grid">
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+          <span class="line"></span><span class="line"></span>
+        </div>
+      </article>
+    </div>
+
+    <div class="paper-wad"></div>
+    <div class="paper-wad big"></div>
+    <div class="caption">一团纸展开，资料页被“擦”出来</div>
+    <div class="film-grain"></div>
+  </main>
+
+  <script>
+    const stage = document.querySelector("#stage");
+    const replay = document.querySelector("#replay");
+
+    replay.addEventListener("click", () => {
+      stage.classList.add("restart");
+      void stage.offsetWidth;
+      stage.classList.remove("restart");
+    });
+  </script>
+</body>
+</html>

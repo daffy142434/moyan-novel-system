@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root, .light {
+  --color-bg: #ffffff;
+  --color-surface: #f3f4f6;
+  --color-surface-hover: #e5e7eb;
+  --color-border: #d1d5db;
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-code-bg: #f9fafb;
+  --accent: #1a73ff;
+  --accent-hover: #3385ff;
+}
+
+.dark {
+  --color-bg: #0f1117;
+  --color-surface: #1a1b23;
+  --color-surface-hover: #22232d;
+  --color-border: #2a2b36;
+  --color-text: #e1e2e8;
+  --color-text-secondary: #8b8d9a;
+  --color-text-tertiary: #5c5e6e;
+  --color-code-bg: #15161e;
+}
+
+/* Theme-aware utility classes */
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+}
+
+/* Theme-aware utility classes */
+@layer utilities {
+  .bg-app { background-color: var(--color-bg); }
+  .bg-surface { background-color: var(--color-surface); }
+  .bg-surface\/60 { background-color: color-mix(in srgb, var(--color-surface) 60%, transparent); }
+  .bg-surface-hover { background-color: var(--color-surface-hover); }
+  .bg-surface-hover\/60 { background-color: color-mix(in srgb, var(--color-surface-hover) 60%, transparent); }
+  .bg-code { background-color: var(--color-code-bg); }
+  .border-theme { border-color: var(--color-border); }
+  .ring-offset-surface { --tw-ring-offset-color: var(--color-surface); }
+  .text-main { color: var(--color-text); }
+  .text-secondary { color: var(--color-text-secondary); }
+  .text-tertiary { color: var(--color-text-tertiary); }
+
+  /* Accent color utility classes - applied via JS when accent changes */
+  .bg-accent { background-color: var(--accent); }
+  .bg-accent-hover { background-color: var(--accent-hover); }
+  .text-accent { color: var(--accent); }
+  .border-accent { border-color: var(--accent); }
+
+  /* Opacity variants */
+  .bg-accent\/5 { background-color: color-mix(in srgb, var(--accent) 5%, transparent); }
+  .bg-accent\/10 { background-color: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .bg-accent\/15 { background-color: color-mix(in srgb, var(--accent) 15%, transparent); }
+  .bg-accent\/20 { background-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+  .bg-accent\/30 { background-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .bg-accent\/50 { background-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+
+  .text-accent\/30 { color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .text-accent\/50 { color: color-mix(in srgb, var(--accent) 50%, transparent); }
+  .text-accent\/80 { color: color-mix(in srgb, var(--accent) 80%, transparent); }
+
+  .border-accent\/20 { border-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+  .border-accent\/30 { border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .border-accent\/50 { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+
+  .ring-accent { --tw-ring-color: var(--accent); }
+  .accent-accent { accent-color: var(--accent); }
+  .caret-accent { caret-color: var(--accent); }
+  .outline-accent { outline-color: var(--accent); }
+  .divide-accent { border-color: var(--accent); }
+  .placeholder-accent::placeholder { color: var(--accent); }
+  .decoration-accent { text-decoration-color: var(--accent); }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Markdown content styles */
+.markdown-body pre {
+  background: var(--color-code-bg);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.markdown-body code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9em;
+}
+.markdown-body p code {
+  background: var(--color-code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.markdown-body p {
+  line-height: 1.7;
+  margin: 8px 0;
+}
+.markdown-body ul, .markdown-body ol {
+  padding-left: 24px;
+  margin: 8px 0;
+  line-height: 1.7;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+  margin: 16px 0 8px;
+}
+.markdown-body blockquote {
+  border-left: 3px solid var(--color-primary);
+  padding-left: 12px;
+  color: var(--color-text-secondary);
+  margin: 8px 0;
+}
