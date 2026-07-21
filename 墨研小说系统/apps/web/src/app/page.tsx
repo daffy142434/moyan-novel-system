@@ -45,11 +45,11 @@ export default function HomePage() {
         <div className="brand-kicker">AI STORY STUDIO</div>
         <h1 className="brand-mark">墨研</h1>
         <p className="brand-copy">
-          把成熟的短篇创作方法，变成每一步都可见、可修改、可确认的写作过程。
-          从故事大纲到五章成稿，创作权始终在你手中。
+          把成熟的剧本创作方法，变成每一步都可见、可修改、可确认的创作过程。
+          从创作方案到分集剧本，创作权始终在你手中。
         </p>
         <div className="brand-flow" aria-label="短篇创作流程">
-          {['故事大纲', '人物小传', '章节目录', '第一章', '第二章', '第三章', '第四章', '第五章'].map((item) => (
+          {['制作模式', '题材定位', '创作设定', '创作方案', '角色开发', '目录大纲', '分集创作'].map((item) => (
             <span className="flow-chip" key={item}>{item}</span>
           ))}
         </div>

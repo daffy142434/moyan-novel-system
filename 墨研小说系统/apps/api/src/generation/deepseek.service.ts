@@ -21,6 +21,16 @@ export class DeepSeekService {
   }
 
   async generateJson(systemPrompt: string, userPrompt: string, signal: AbortSignal, model = this.primaryModel) {
+    return this.generateJsonStream(systemPrompt, userPrompt, signal, {}, model);
+  }
+
+  async generateJsonStream(
+    systemPrompt: string,
+    userPrompt: string,
+    signal: AbortSignal,
+    callbacks: { reasoning?: (delta: string) => void; content?: (delta: string) => void },
+    model = this.primaryModel,
+  ) {
     if (!this.isConfigured()) {
       throw new ServiceUnavailableException({
         code: 'DEEPSEEK_NOT_CONFIGURED',
@@ -28,7 +38,7 @@ export class DeepSeekService {
       });
     }
     const client = new OpenAI({ apiKey: this.apiKey, baseURL: this.baseURL });
-    const completion = await client.chat.completions.create(
+    const stream = await client.chat.completions.create(
       {
         model,
         messages: [
@@ -38,16 +48,34 @@ export class DeepSeekService {
         response_format: { type: 'json_object' },
         max_tokens: 12_000,
         temperature: 0.8,
+        stream: true,
+        stream_options: { include_usage: true },
       },
       { signal },
     );
-    const content = completion.choices[0]?.message?.content;
+    let content = '';
+    let resolvedModel = model;
+    let inputTokens: number | null = null;
+    let outputTokens: number | null = null;
+    for await (const chunk of stream) {
+      resolvedModel = chunk.model || resolvedModel;
+      const delta = chunk.choices[0]?.delta as { content?: string | null; reasoning_content?: string | null } | undefined;
+      if (delta?.reasoning_content) callbacks.reasoning?.(delta.reasoning_content);
+      if (delta?.content) {
+        content += delta.content;
+        callbacks.content?.(delta.content);
+      }
+      if (chunk.usage) {
+        inputTokens = chunk.usage.prompt_tokens;
+        outputTokens = chunk.usage.completion_tokens;
+      }
+    }
     if (!content) throw new Error('DeepSeek returned an empty response');
     return {
       content,
-      model: completion.model || this.primaryModel,
-      inputTokens: completion.usage?.prompt_tokens ?? null,
-      outputTokens: completion.usage?.completion_tokens ?? null,
+      model: resolvedModel,
+      inputTokens,
+      outputTokens,
     };
   }
 }

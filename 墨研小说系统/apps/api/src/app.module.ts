@@ -4,10 +4,9 @@ import path from 'node:path';
 import { HealthController } from './health.controller';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
-import { ProjectsModule } from './projects/projects.module';
 import { SkillsModule } from './skills/skills.module';
-import { GenerationModule } from './generation/generation.module';
 import { StorageModule } from './storage/storage.module';
+import { StudioModule } from './studio/studio.module';
 
 @Module({
   imports: [
@@ -19,10 +18,8 @@ import { StorageModule } from './storage/storage.module';
     StorageModule,
     AuthModule,
     SkillsModule,
-    ProjectsModule,
-    GenerationModule,
+    StudioModule,
   ],
   controllers: [HealthController],
 })
 export class AppModule {}
-

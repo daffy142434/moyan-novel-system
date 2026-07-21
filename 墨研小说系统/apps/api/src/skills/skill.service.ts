@@ -1,6 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import type { ShortNovelStepKey } from '@moyan/contracts';
+import { Injectable } from '@nestjs/common';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -11,60 +9,53 @@ export interface SkillMaterial {
   example: string;
 }
 
+export type WorkflowProduct = 'short_drama' | 'comic_drama';
+export type WorkflowStage = 'proposal' | 'characters' | 'catalog' | 'episode' | 'review';
+
 @Injectable()
 export class SkillService {
   private readonly skillRoot: string;
   private readonly cache = new Map<string, SkillMaterial>();
 
-  constructor(@Inject(ConfigService) config: ConfigService) {
-    const configured = config.get<string>('SHORT_NOVEL_SKILL_PATH');
-    this.skillRoot = configured
-      ? path.resolve(configured)
-      : path.resolve(
-          __dirname,
-          '../../../../2026年茗舒短剧爆款速成班/5-短篇小说skill（short-novel-skill）',
-        );
+  constructor() {
+    this.skillRoot = path.resolve(__dirname, '../../../../2026年茗舒短剧爆款速成班');
   }
 
-  async getShortNovelMaterial(stepKey: ShortNovelStepKey): Promise<SkillMaterial> {
-    const phase = this.phase(stepKey);
-    const cached = this.cache.get(phase);
+  async getWorkflowMaterial(product: WorkflowProduct, stage: WorkflowStage): Promise<SkillMaterial> {
+    const cacheKey = `${product}:${stage}`;
+    const cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const templateNames: Record<string, string> = {
-      outline: 'outline-template.md',
-      characters: 'character-template.md',
-      chapter_index: 'chapter-index-template.md',
-      chapter: 'chapter-template.md',
+    const courseRoot = this.skillRoot;
+    const root = product === 'short_drama'
+      ? path.join(courseRoot, '1-写作skill（short-drama）')
+      : path.join(courseRoot, '4-漫剧skill（comic-drama）');
+    const manifest = product === 'short_drama' ? 'skill.md' : 'SKILL.md';
+    const shared: Record<WorkflowStage, string[]> = {
+      proposal: ['references/genre-guide.md', 'references/rhythm-design.md', 'references/opening-hooks.md', 'references/conflict-design.md'],
+      characters: ['references/character-dev.md'],
+      catalog: ['references/rhythm-design.md', 'references/opening-hooks.md', 'references/conflict-design.md'],
+      episode: ['references/episode-writing.md', 'references/script-format.md'],
+      review: ['references/episode-writing.md', 'references/compliance-checklist.md'],
     };
-    const exampleNames: Record<string, string | null> = {
-      outline: 'outline-example.md',
-      characters: 'character-example.md',
-      chapter_index: null,
-      chapter: 'chapter-example.md',
-    };
-    const [skill, outlineMethod, outputStyle, template, example] = await Promise.all([
-      this.read('SKILL.md'),
-      phase === 'chapter' ? Promise.resolve('') : this.read('outline-method.md'),
-      this.read('output-style.md'),
-      this.read(`templates/${templateNames[phase]}`),
-      exampleNames[phase] ? this.read(`examples/${exampleNames[phase]}`) : Promise.resolve(''),
-    ]);
+    const extras = product === 'comic_drama'
+      ? stage === 'proposal'
+        ? ['references/visual-style.md']
+        : stage === 'episode'
+          ? ['references/visual-writing.md', 'references/ai-awareness.md']
+          : []
+      : stage === 'episode'
+        ? ['references/overseas-drama-format.md']
+        : [];
+    const files = [manifest, ...shared[stage], ...extras];
+    const sections = await Promise.all(files.map((file) => fs.readFile(path.join(root, file), 'utf8')));
     const material: SkillMaterial = {
-      version: 'short-novel-skill@2026-07-21',
-      instructions: [skill, outlineMethod, outputStyle].filter(Boolean).join('\n\n---\n\n'),
-      template,
-      example,
+      version: `${product}@2026-07-21`,
+      instructions: sections.join('\n\n---\n\n'),
+      template: '',
+      example: '',
     };
-    this.cache.set(phase, material);
+    this.cache.set(cacheKey, material);
     return material;
-  }
-
-  private phase(stepKey: ShortNovelStepKey) {
-    return stepKey.startsWith('chapter_') && stepKey !== 'chapter_index' ? 'chapter' : stepKey;
-  }
-
-  private read(relativePath: string) {
-    return fs.readFile(path.join(this.skillRoot, relativePath), 'utf8');
   }
 }

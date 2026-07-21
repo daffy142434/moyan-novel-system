@@ -7,7 +7,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: '墨研小说',
-  description: '基于专业创作 Skill 的中文小说创作平台',
+  description: '中文剧本与小说创作平台',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -19,10 +19,20 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             locale={zhCN}
             theme={{
               token: {
-                colorPrimary: '#6f4e37',
-                colorInfo: '#6f4e37',
+                colorPrimary: '#1677ff',
+                colorInfo: '#1677ff',
+                colorSuccess: '#52c41a',
+                colorWarning: '#faad14',
+                colorError: '#ff4d4f',
+                colorBgBase: '#ffffff',
+                colorBgLayout: '#f5f5f5',
                 borderRadius: 10,
                 fontFamily: 'Inter, PingFang SC, Microsoft YaHei, sans-serif',
+              },
+              components: {
+                Layout: { bodyBg: '#f5f5f5', headerBg: '#ffffff' },
+                Menu: { itemSelectedColor: '#1677ff', horizontalItemSelectedColor: '#1677ff' },
+                Card: { headerBg: '#ffffff' },
               },
             }}
           >

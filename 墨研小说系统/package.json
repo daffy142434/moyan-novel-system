@@ -14,7 +14,8 @@
     "typecheck": "npm run typecheck -w @moyan/contracts && npm run typecheck -w @moyan/api && npm run typecheck -w @moyan/web",
     "db:migrate": "npm run db:migrate -w @moyan/api",
     "test:api": "npm run test:api -w @moyan/api",
-    "test:e2e": "node scripts/ui-smoke.mjs"
+    "test:e2e": "node scripts/ui-smoke.mjs",
+    "test:ui:story": "node scripts/ui-story-detail.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",

@@ -1,4 +1,14 @@
-import type { AuthResponseDto, GenerationRunDto, ProjectDto, ShortNovelStepKey } from '@moyan/contracts';
+import type {
+  AuthResponseDto,
+  BuildStageKey,
+  CreationSessionDto,
+  DashboardDto,
+  ProductDefinitionDto,
+  ProductType,
+  StudioGenerationInputDto,
+  StudioGenerationRunDto,
+  StudioProjectDto,
+} from '@moyan/contracts';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100/api';
 const TOKEN_KEY = 'moyan_access_token';
@@ -59,44 +69,99 @@ export const session = {
   },
 };
 
-export interface PromptDto {
-  stepKey: ShortNovelStepKey;
-  skillVersion: string;
-  basePrompt: string;
-  content: string;
-  version: number;
-}
-
 export const api = {
   register: (input: { email: string; password: string; displayName: string }) =>
     request<AuthResponseDto>('/auth/register', { method: 'POST', body: JSON.stringify(input) }),
   login: (input: { email: string; password: string }) =>
     request<AuthResponseDto>('/auth/login', { method: 'POST', body: JSON.stringify(input) }),
-  listProjects: () => request<ProjectDto[]>('/projects'),
-  createProject: (input: { title: string; genre: string; coreIdea: string; coreConflict: string; tone: string }) =>
-    request<ProjectDto>('/projects', { method: 'POST', body: JSON.stringify(input) }),
-  getProject: (projectId: string) => request<ProjectDto>(`/projects/${projectId}`),
-  getPrompt: (projectId: string, stepKey: ShortNovelStepKey) =>
-    request<PromptDto>(`/projects/${projectId}/steps/${stepKey}/prompt`),
-  updatePrompt: (projectId: string, stepKey: ShortNovelStepKey, content: string) =>
-    request<{ stepKey: ShortNovelStepKey; content: string; version: number }>(
-      `/projects/${projectId}/steps/${stepKey}/prompt`,
-      { method: 'PUT', body: JSON.stringify({ content }) },
-    ),
-  createRun: (projectId: string, input: { stepKey: ShortNovelStepKey; instruction: string; idempotencyKey: string }) =>
-    request<GenerationRunDto>(`/projects/${projectId}/generation-runs`, {
-      method: 'POST',
-      body: JSON.stringify(input),
+  products: () => request<ProductDefinitionDto[]>('/studio/products'),
+  dashboard: () => request<DashboardDto>('/studio/dashboard'),
+  studioProjects: () => request<StudioProjectDto[]>('/studio/projects'),
+  studioProject: (projectId: string) => request<StudioProjectDto>(`/studio/projects/${projectId}`),
+  deleteStudioProject: (projectId: string) =>
+    request<{ deleted: boolean; id: string }>(`/studio/projects/${projectId}`, { method: 'DELETE' }),
+  createSession: (productType: ProductType) =>
+    request<CreationSessionDto>('/studio/creation-sessions', {
+      method: 'POST', body: JSON.stringify({ productType }),
     }),
-  getRun: (runId: string) => request<GenerationRunDto>(`/generation-runs/${runId}`),
-  cancelRun: (runId: string) =>
-    request<{ cancelled: boolean }>(`/generation-runs/${runId}/cancel`, { method: 'POST' }),
-  confirmVersion: (projectId: string, stepKey: ShortNovelStepKey, versionId: string) =>
-    request<ProjectDto>(`/projects/${projectId}/steps/${stepKey}/confirm`, {
-      method: 'POST',
-      body: JSON.stringify({ versionId }),
+  updateSession: (sessionId: string, input: { selections?: Record<string, unknown>; selectedTitle?: string; proposalContent?: string }) =>
+    request<CreationSessionDto>(`/studio/creation-sessions/${sessionId}`, {
+      method: 'PUT', body: JSON.stringify(input),
     }),
+  confirmSession: (sessionId: string, selectedTitle: string) =>
+    request<StudioProjectDto>(`/studio/creation-sessions/${sessionId}/confirm`, {
+      method: 'POST', body: JSON.stringify({ selectedTitle }),
+    }),
+  saveBuild: (projectId: string, stage: BuildStageKey, content: string, summary = '') =>
+    request<StudioProjectDto>(`/studio/projects/${projectId}/build/${stage}`, {
+      method: 'PUT', body: JSON.stringify({ content, summary }),
+    }),
+  confirmBuild: (projectId: string, stage: BuildStageKey) =>
+    request<StudioProjectDto>(`/studio/projects/${projectId}/build/${stage}/confirm`, { method: 'POST' }),
+  rewindBuild: (projectId: string, stage: BuildStageKey) =>
+    request<StudioProjectDto>(`/studio/projects/${projectId}/build/${stage}/rewind`, { method: 'POST' }),
+  saveEpisode: (projectId: string, number: number, content: string, title?: string) =>
+    request<StudioProjectDto>(`/studio/projects/${projectId}/episodes/${number}`, {
+      method: 'PUT', body: JSON.stringify({ content, title }),
+    }),
+  addAnnotation: (projectId: string, number: number, input: {
+    startOffset: number; endOffset: number; quotedText: string; note: string;
+  }) => request<StudioProjectDto>(`/studio/projects/${projectId}/episodes/${number}/annotations`, {
+    method: 'POST', body: JSON.stringify(input),
+  }),
+  deleteAnnotation: (projectId: string, number: number, annotationId: string) =>
+    request<StudioProjectDto>(`/studio/projects/${projectId}/episodes/${number}/annotations/${annotationId}`, {
+      method: 'DELETE',
+    }),
+  confirmEpisode: (projectId: string, number: number) =>
+    request<StudioProjectDto>(`/studio/projects/${projectId}/episodes/${number}/confirm`, { method: 'POST' }),
+  startStudioGeneration: (input: StudioGenerationInputDto) =>
+    request<StudioGenerationRunDto>('/studio/generation-runs', { method: 'POST', body: JSON.stringify(input) }),
+  cancelStudioGeneration: (runId: string) =>
+    request<{ cancelled: boolean }>(`/studio/generation-runs/${runId}/cancel`, { method: 'POST' }),
 };
+
+export async function streamStudioGeneration(
+  input: StudioGenerationInputDto,
+  onUpdate: (run: StudioGenerationRunDto) => void,
+) {
+  let run = await api.startStudioGeneration(input);
+  onUpdate(run);
+  const response = await fetch(`${API_URL}/studio/generation-runs/${run.id}/events`, {
+    headers: { Authorization: `Bearer ${token() ?? ''}` },
+  });
+  if (!response.ok || !response.body) throw new ApiError(response.status, 'GENERATION_STREAM_FAILED', '无法建立生成流');
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+    const blocks = buffer.split('\n\n');
+    buffer = blocks.pop() ?? '';
+    for (const block of blocks) {
+      const event = block.split('\n').find((line) => line.startsWith('event:'))?.slice(6).trim();
+      const raw = block.split('\n').find((line) => line.startsWith('data:'))?.slice(5).trim();
+      if (!event || !raw) continue;
+      const data = JSON.parse(raw) as Record<string, unknown>;
+      if (event === 'run.started') run = { ...run, ...data };
+      if (event === 'reasoning.delta') run = { ...run, status: 'streaming', reasoning: run.reasoning + String(data.delta ?? '') };
+      if (event === 'content.delta') run = { ...run, status: 'streaming', content: run.content + String(data.delta ?? '') };
+      if (event === 'run.completed') run = { ...run, status: 'completed', result: data.result };
+      if (event === 'run.cancelled') run = { ...run, status: 'cancelled' };
+      if (event === 'run.failed') run = {
+        ...run,
+        status: 'failed',
+        errorCode: String(data.code ?? data.errorCode ?? ''),
+        errorMessage: String(data.message ?? data.errorMessage ?? ''),
+      };
+      onUpdate(run);
+    }
+    if (done) break;
+  }
+  if (run.status === 'failed') throw new ApiError(500, run.errorCode ?? 'GENERATION_FAILED', run.errorMessage ?? '生成失败');
+  return run;
+}
 
 export function readableError(error: unknown) {
   if (error instanceof ApiError) {

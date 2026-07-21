@@ -1,27 +1,3 @@
-export const SHORT_NOVEL_STEPS = [
-  'outline',
-  'characters',
-  'chapter_index',
-  'chapter_1',
-  'chapter_2',
-  'chapter_3',
-  'chapter_4',
-  'chapter_5',
-] as const;
-
-export type ShortNovelStepKey = (typeof SHORT_NOVEL_STEPS)[number];
-
-export type StepStatus =
-  | 'not_started'
-  | 'available'
-  | 'editing'
-  | 'generating'
-  | 'awaiting_confirmation'
-  | 'completed'
-  | 'needs_review'
-  | 'failed'
-  | 'interrupted';
-
 export interface UserDto {
   id: string;
   email: string;
@@ -33,60 +9,162 @@ export interface AuthResponseDto {
   user: UserDto;
 }
 
-export interface ProjectStepDto {
-  key: ShortNovelStepKey;
-  position: number;
-  status: StepStatus;
-  confirmedVersionId: string | null;
+export const PRODUCT_TYPES = ['short_drama', 'comic_drama'] as const;
+export type ProductType = (typeof PRODUCT_TYPES)[number];
+export type ProjectLifecycleStatus =
+  | 'building'
+  | 'ready_to_write'
+  | 'writing'
+  | 'completed'
+  | 'archived';
+export type BuildStageKey = 'proposal' | 'characters' | 'catalog';
+export type BuildArtifactStatus = 'available' | 'candidate' | 'confirmed' | 'locked';
+export type EpisodeStatus = 'locked' | 'available' | 'draft' | 'review_required' | 'confirmed';
+
+export interface ChoiceOptionDto {
+  value: string;
+  label: string;
+  description: string;
+  recommendation?: number;
+  disabled?: boolean;
+  tags?: string[];
+  compatibleModes?: string[];
+  channel?: 'male' | 'female' | 'all';
 }
 
-export interface ArtifactVersionDto {
+export interface ProductDefinitionDto {
+  type: ProductType | string;
+  title: string;
+  description: string;
+  enabled: boolean;
+  badge?: string;
+  modes: ChoiceOptionDto[];
+  genres: ChoiceOptionDto[];
+  visualStyles?: ChoiceOptionDto[];
+  settings: {
+    audiences: ChoiceOptionDto[];
+    tones: ChoiceOptionDto[];
+    endings: ChoiceOptionDto[];
+    episodeCounts: number[];
+    languages: ChoiceOptionDto[];
+  };
+}
+
+export interface CreationSessionDto {
   id: string;
-  artifactId: string;
-  logicalKey: ShortNovelStepKey;
+  productType: ProductType;
+  selections: Record<string, unknown>;
+  proposalContent: string;
+  proposalSummary: string;
+  titleOptions: string[];
+  selectedTitle: string;
+  expiresAt: string;
+}
+
+export interface BuildArtifactDto {
+  id: string;
+  stage: BuildStageKey;
+  status: BuildArtifactStatus;
   version: number;
-  status: 'draft' | 'candidate' | 'confirmed' | 'archived' | 'rejected';
   content: string;
-  structuredData: Record<string, unknown>;
+  summary: string;
+  updatedAt: string;
+}
+
+export interface EpisodeAnnotationDto {
+  id: string;
+  startOffset: number;
+  endOffset: number;
+  quotedText: string;
+  note: string;
   createdAt: string;
 }
 
-export interface ProjectDto {
+export interface ReviewReportDto {
+  id: string;
+  score: number;
+  summary: string;
+  suggestions: string[];
+  dimensions: Record<string, number>;
+  contentVersion: number;
+  createdAt: string;
+}
+
+export interface EpisodeDto {
+  id: string;
+  number: number;
+  title: string;
+  outlineSummary: string;
+  status: EpisodeStatus;
+  content: string;
+  contentVersion: number;
+  annotations: EpisodeAnnotationDto[];
+  latestReview: ReviewReportDto | null;
+  updatedAt: string;
+}
+
+export interface StudioProjectDto {
   id: string;
   title: string;
+  productType: ProductType;
+  productionMode: string;
   genre: string;
-  coreIdea: string;
-  coreConflict: string;
+  visualStyle: string;
+  audience: string;
   tone: string;
-  creationMode: 'short_novel_five_chapter';
-  currentStep: ShortNovelStepKey;
+  endingType: string;
+  language: string;
+  episodeCount: number;
+  lifecycleStatus: ProjectLifecycleStatus;
+  constructionLocked: boolean;
+  synopsis: string;
+  settings: Record<string, unknown>;
+  buildArtifacts: BuildArtifactDto[];
+  episodes: EpisodeDto[];
   createdAt: string;
   updatedAt: string;
-  steps?: ProjectStepDto[];
-  versions?: ArtifactVersionDto[];
 }
 
-export interface GenerationRunDto {
+export interface DashboardDto {
+  projectCount: number;
+  statusCounts: Record<string, number>;
+  totalEpisodes: number;
+  completedEpisodes: number;
+  membership: {
+    plan: 'free' | 'plus' | 'max';
+    creditBalance: number;
+  };
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    credits: number;
+  };
+  recentProjects: StudioProjectDto[];
+}
+
+export type StudioGenerationScope =
+  | 'proposal'
+  | 'build'
+  | 'episode_generate'
+  | 'episode_optimize'
+  | 'episode_review';
+
+export interface StudioGenerationInputDto {
+  scope: StudioGenerationScope;
+  sessionId?: string;
+  projectId?: string;
+  stage?: BuildStageKey;
+  episodeNumber?: number;
+  instruction?: string;
+}
+
+export interface StudioGenerationRunDto {
   id: string;
-  projectId: string;
-  stepKey: ShortNovelStepKey;
-  status: string;
-  candidateVersionId: string | null;
-  errorCode: string | null;
-  errorMessage: string | null;
-  partialContent: string;
-  createdAt: string;
-  finishedAt: string | null;
-}
-
-export interface GenerationEventDto {
-  id: number;
-  type:
-    | 'run.started'
-    | 'run.progress'
-    | 'content.delta'
-    | 'run.completed'
-    | 'run.failed'
-    | 'run.cancelled';
-  data: Record<string, unknown>;
+  scope: StudioGenerationScope;
+  status: 'queued' | 'streaming' | 'completed' | 'failed' | 'cancelled';
+  reasoning: string;
+  content: string;
+  result?: unknown;
+  errorCode?: string;
+  errorMessage?: string;
 }
