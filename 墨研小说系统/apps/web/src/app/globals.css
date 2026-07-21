@@ -1,0 +1,62 @@
+:root {
+  color-scheme: light;
+  --ink: #27221f;
+  --muted: #746a63;
+  --paper: #fbf8f2;
+  --accent: #6f4e37;
+  --accent-dark: #4e3427;
+  --line: rgba(82, 62, 49, 0.14);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--paper); color: var(--ink); }
+body {
+  background-image:
+    radial-gradient(circle at 12% 10%, rgba(184, 140, 91, .12), transparent 28%),
+    radial-gradient(circle at 86% 6%, rgba(105, 123, 97, .10), transparent 25%);
+}
+a { color: inherit; text-decoration: none; }
+
+.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1.1fr .9fr; }
+.brand-panel { padding: 72px clamp(36px, 7vw, 110px); display: flex; flex-direction: column; justify-content: center; }
+.brand-mark { font-family: STKaiti, KaiTi, serif; font-size: clamp(54px, 7vw, 92px); letter-spacing: .12em; margin: 0; color: var(--accent-dark); }
+.brand-kicker { letter-spacing: .28em; color: #8c6449; font-size: 13px; margin-bottom: 18px; }
+.brand-copy { max-width: 560px; font-size: 18px; line-height: 1.9; color: var(--muted); }
+.brand-flow { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
+.flow-chip { padding: 8px 13px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.48); font-size: 13px; color: #675b54; }
+.auth-panel { display: flex; align-items: center; justify-content: center; padding: 36px; background: rgba(255,255,255,.54); border-left: 1px solid var(--line); backdrop-filter: blur(16px); }
+.auth-card { width: min(430px, 100%); border: 0 !important; box-shadow: 0 24px 80px rgba(72,52,39,.12); }
+
+.app-shell { min-height: 100vh; }
+.topbar { height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; background: rgba(251,248,242,.88); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 20; }
+.topbar-brand { font-family: STKaiti, KaiTi, serif; font-size: 26px; color: var(--accent-dark); letter-spacing: .14em; }
+.page-wrap { max-width: 1320px; margin: 0 auto; padding: 38px 28px 70px; }
+.page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+.eyebrow { text-transform: uppercase; letter-spacing: .18em; font-size: 11px; color: #98785e; }
+.project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; }
+.project-card { height: 100%; border-color: var(--line) !important; transition: transform .18s ease, box-shadow .18s ease; }
+.project-card:hover { transform: translateY(-3px); box-shadow: 0 15px 38px rgba(69,49,36,.10); }
+
+.studio-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 22px; align-items: start; }
+.step-sidebar { position: sticky; top: 90px; }
+.step-button { width: 100%; text-align: left; border: 0; background: transparent; padding: 11px 10px; border-radius: 9px; cursor: pointer; color: var(--ink); display: flex; align-items: center; gap: 10px; }
+.step-button:hover { background: #f4eee5; }
+.step-button.active { background: #ede3d6; color: var(--accent-dark); font-weight: 600; }
+.step-button:disabled { cursor: not-allowed; color: #aaa19a; }
+.step-index { width: 24px; height: 24px; border-radius: 50%; background: #e6ded5; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex: 0 0 auto; }
+.step-button.active .step-index { background: var(--accent); color: white; }
+.studio-content { min-width: 0; }
+.brief-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.result-paper { min-height: 260px; max-height: 620px; overflow: auto; white-space: pre-wrap; line-height: 1.9; font-family: 'Noto Serif SC', SimSun, serif; padding: 24px; background: #fdfbf7; border: 1px solid var(--line); border-radius: 10px; }
+.prompt-base { max-height: 340px; overflow: auto; white-space: pre-wrap; font-size: 12px; line-height: 1.7; background: #f7f4ef; padding: 14px; border-radius: 8px; }
+
+@media (max-width: 900px) {
+  .auth-shell { grid-template-columns: 1fr; }
+  .brand-panel { padding: 50px 28px 24px; }
+  .auth-panel { border-left: 0; padding: 24px 20px 50px; }
+  .studio-grid { grid-template-columns: 1fr; }
+  .step-sidebar { position: static; }
+  .brief-grid { grid-template-columns: 1fr; }
+  .topbar { padding: 0 18px; }
+  .page-wrap { padding: 28px 16px 50px; }
+}
