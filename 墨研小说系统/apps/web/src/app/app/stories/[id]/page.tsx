@@ -39,12 +39,14 @@ import {
 import type { BuildArtifactDto, BuildStageKey, EpisodeAnnotationDto, EpisodeDto, StudioGenerationRunDto, StudioProjectDto } from '@moyan/contracts';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppShell } from '../../../../components/AppShell';
 import { GenerationStreamDrawer } from '../../../../components/GenerationStreamDrawer';
+import ModelPromptSelector from '../../../../components/ModelPromptSelector';
 import { api, readableError, session, streamStudioGeneration } from '../../../../lib/api';
 
 const buildMeta: Record<BuildStageKey, { title: string; description: string }> = {
+  outline: { title: '故事大纲', description: '起承转合结构、核心冲突、结局与推荐标题' },
   proposal: { title: '创作方案', description: '故事核心、结构、节奏、结局与推荐标题' },
   characters: { title: '角色开发', description: '角色信息、关系、弧线与视觉锚点' },
   catalog: { title: '目录大纲', description: '逐集冲突、爽点、付费卡点与衔接' },
@@ -104,6 +106,9 @@ function BuildWorkspace({ project, onChange, notify }: { project: StudioProjectD
   const [busy, setBusy] = useState(false);
   const [streamRun, setStreamRun] = useState<StudioGenerationRunDto | null>(null);
   const [streamOpen, setStreamOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const pendingAction = useRef<(() => void) | null>(null);
   const [modal, modalContext] = Modal.useModal();
   useEffect(() => { setContent(artifact?.content ?? ''); setInstruction(''); }, [artifact?.content, artifact?.id]);
   async function act(work: () => Promise<StudioProjectDto>, success: string) {
@@ -116,7 +121,7 @@ function BuildWorkspace({ project, onChange, notify }: { project: StudioProjectD
     if (!artifact || artifact.status === 'locked') return;
     setBusy(true); setStreamRun(null); setStreamOpen(true);
     try {
-      const run = await streamStudioGeneration({ scope: 'build', projectId: project.id, stage, instruction }, setStreamRun);
+      const run = await streamStudioGeneration({ scope: 'build', projectId: project.id, stage, instruction, modelId: selectedModel }, setStreamRun);
       if (run.status === 'completed') {
         const next = run.result as StudioProjectDto;
         onChange(next);
@@ -144,10 +149,11 @@ function BuildWorkspace({ project, onChange, notify }: { project: StudioProjectD
   return <Layout className="studio-layout">{modalContext}<Layout.Sider theme="light" width={280} className="step-sidebar"><Card title="小说构建" styles={{ body: { padding: 16 } }}><Steps direction="vertical" current={currentStage} onChange={(index) => setStage(project.buildArtifacts[index].stage)} items={project.buildArtifacts.map((item) => ({ title: buildMeta[item.stage].title, description: <Tag color={buildStatusColor(item.status)}>{buildStatusLabel(item.status)}</Tag>, status: item.status === 'confirmed' ? 'finish' : item.stage === stage ? 'process' : 'wait', icon: item.status === 'locked' ? <LockOutlined /> : undefined }))} /></Card></Layout.Sider>
     <Layout.Content className="studio-content"><Card><Space direction="vertical" size={15} style={{ width: '100%' }}><Space style={{ justifyContent: 'space-between', width: '100%' }} align="start"><div><Typography.Title level={3}>{buildMeta[stage].title}</Typography.Title><Typography.Text type="secondary">{buildMeta[stage].description}</Typography.Text></div>{artifact && <Tag color={buildStatusColor(artifact.status)}>{buildStatusLabel(artifact.status)}</Tag>}</Space>
       <BuildContextSummary project={project} stage={stage} onView={showContext} />
-      {artifact?.status === 'locked' ? <Alert type="info" showIcon message="该步骤尚未解锁" description="请先确认上一个构建步骤。" /> : <><Typography.Text strong><MessageOutlined /> 本次生成或调整要求</Typography.Text><Input.TextArea rows={3} value={instruction} onChange={(event) => setInstruction(event.target.value)} placeholder="例如：强化女主的主动性；增加第10集付费卡点……" disabled={busy} /><Space wrap><Button type="primary" icon={artifact?.content ? <ReloadOutlined /> : <PlayCircleOutlined />} loading={busy} onClick={() => void generate()}>{artifact?.content ? '重新生成' : '开始生成'}</Button>{artifact?.content && <Button icon={<SaveOutlined />} disabled={busy} loading={busy} onClick={save}>保存修改</Button>}{artifact?.status === 'confirmed' && stage !== 'catalog' && <Button danger disabled={busy} onClick={() => rewind(stage)}>回退到本步骤</Button>}</Space></>}
+      {artifact?.status === 'locked' ? <Alert type="info" showIcon message="该步骤尚未解锁" description="请先确认上一个构建步骤。" /> : <><Typography.Text strong><MessageOutlined /> 本次生成或调整要求</Typography.Text><Input.TextArea rows={3} value={instruction} onChange={(event) => setInstruction(event.target.value)} placeholder="例如：强化女主的主动性；增加第10集付费卡点……" disabled={busy} /><Space wrap><Button type="primary" icon={artifact?.content ? <ReloadOutlined /> : <PlayCircleOutlined />} loading={busy} onClick={() => { pendingAction.current = () => { void generate(); }; setSelectorOpen(true); }}>{artifact?.content ? '重新生成' : '开始生成'}</Button>{artifact?.content && <Button icon={<SaveOutlined />} disabled={busy} loading={busy} onClick={save}>保存修改</Button>}{artifact?.status === 'confirmed' && stage !== 'catalog' && <Button danger disabled={busy} onClick={() => rewind(stage)}>回退到本步骤</Button>}</Space></>}
       {artifact?.content && <><Divider /><Typography.Title level={5}>构建文档</Typography.Title><Input.TextArea className="build-editor" rows={26} value={content} onChange={(event) => setContent(event.target.value)} readOnly={artifact.status === 'locked' || busy} /></>}
       {artifact?.content && artifact.status !== 'locked' && <Space><Button type="primary" size="large" icon={<CheckCircleOutlined />} loading={busy} onClick={confirm}>确认{stage === 'catalog' ? '并开始分集创作' : '并进入下一步'}</Button><Typography.Text type="secondary">版本 v{artifact.version}</Typography.Text></Space>}
     </Space></Card></Layout.Content><GenerationStreamDrawer open={streamOpen} title={`正在生成${buildMeta[stage].title}`} run={streamRun} onStop={stopGeneration} onClose={() => setStreamOpen(false)} />
+  <ModelPromptSelector open={selectorOpen} scope={stage} onCancel={() => setSelectorOpen(false)} onStart={(opts) => { setSelectorOpen(false); setSelectedModel(opts.modelId || ''); pendingAction.current?.(); }} />
   </Layout>;
 }
 

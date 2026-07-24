@@ -21,8 +21,8 @@ import { SkillService, type WorkflowProduct, type WorkflowStage } from '../skill
 import { StudioGenerationService, type GenerationObserver } from './studio-generation.service';
 
 const workflowProducts = ['short_drama', 'comic_drama'] as const;
-const buildStages = ['proposal', 'characters', 'catalog'] as const;
-const buildMetaTitle = (stage: BuildStageKey) => ({ proposal: '创作方案', characters: '角色开发', catalog: '目录大纲' } as const)[stage];
+const buildStages = ['outline', 'proposal', 'characters', 'catalog'] as const;
+const buildMetaTitle = (stage: BuildStageKey) => ({ outline: '故事大纲', proposal: '创作方案', characters: '角色开发', catalog: '目录大纲' } as const)[stage];
 
 const creativeResponseSchema = z.object({
   content: z.string().min(1),
@@ -359,6 +359,10 @@ export class StudioService {
       },
       recentProjects: projects.slice(0, 5),
     };
+  }
+
+  async getModels() {
+    return (await this.database.query('SELECT * FROM system_models WHERE is_enabled=true ORDER BY priority DESC')).rows;
   }
 
   async getProject(userId: string, projectId: string): Promise<StudioProjectDto> {

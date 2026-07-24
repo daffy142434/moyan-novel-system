@@ -7,6 +7,9 @@ import { AuthModule } from './auth/auth.module';
 import { SkillsModule } from './skills/skills.module';
 import { StorageModule } from './storage/storage.module';
 import { StudioModule } from './studio/studio.module';
+import { AdminModule } from './admin/admin.module';
+import { MembershipModule } from './membership/membership.module';
+import { SubmissionModule } from './submissions/submission.module';
 
 @Module({
   imports: [
@@ -19,6 +22,9 @@ import { StudioModule } from './studio/studio.module';
     AuthModule,
     SkillsModule,
     StudioModule,
+    AdminModule,
+    MembershipModule,
+    SubmissionModule,
   ],
   controllers: [HealthController],
 })

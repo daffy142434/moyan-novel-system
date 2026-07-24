@@ -4,6 +4,7 @@ import type { Response } from 'express';
 import { AuthGuard, type AuthenticatedRequest } from '../auth/auth.guard';
 import { StudioService } from './studio.service';
 import { StudioGenerationService } from './studio-generation.service';
+import { DatabaseService } from '../database/database.service';
 
 @Controller('studio')
 @UseGuards(AuthGuard)
@@ -11,6 +12,7 @@ export class StudioController {
   constructor(
     @Inject(StudioService) private readonly studio: StudioService,
     @Inject(StudioGenerationService) private readonly runs: StudioGenerationService,
+    @Inject(DatabaseService) private readonly db: DatabaseService,
   ) {}
 
   @Post('generation-runs')
@@ -52,6 +54,62 @@ export class StudioController {
 
   @Get('dashboard')
   dashboard(@Req() request: AuthenticatedRequest) { return this.studio.dashboard(request.user.id); }
+
+  @Get('models')
+  async models() {
+    return this.studio.getModels();
+  }
+
+  @Get('model-preferences')
+  async getModelPreferences(@Req() req: AuthenticatedRequest) {
+    const r = await this.db.query(
+      `SELECT ump.scenario, ump.model_id, sm.name, sm.provider, 'system' as origin
+       FROM user_model_preferences ump JOIN system_models sm ON sm.id = ump.model_id::uuid
+       WHERE ump.user_id = $1::uuid
+       UNION ALL
+       SELECT ump.scenario, ump.model_id, um.name, um.provider, 'user' as origin
+       FROM user_model_preferences ump JOIN user_models um ON um.id = ump.model_id::uuid
+       WHERE ump.user_id = $1::uuid`, [req.user.id],
+    ).catch(() => ({ rows: [] }));
+    const prefs: Record<string, any> = {};
+    for (const row of r.rows) {
+      prefs[row.scenario] = { modelId: row.model_id, name: row.name, provider: row.provider, origin: row.origin };
+    }
+    return prefs;
+  }
+
+  @Put('model-preferences')
+  async updateModelPreferences(@Req() req: AuthenticatedRequest, @Body() body: Record<string, string>) {
+    for (const [scenario, modelId] of Object.entries(body)) {
+      if (!modelId) continue;
+      await this.db.query(
+        `INSERT INTO user_model_preferences (user_id, scenario, model_id, updated_at) VALUES ($1,$2,$3,now())
+         ON CONFLICT (user_id, scenario) DO UPDATE SET model_id=$3, updated_at=now()`,
+        [req.user.id, scenario, modelId],
+      ).catch(() => {});
+    }
+    return { ok: true };
+  }
+
+  @Get('user-models')
+  async getUserModels(@Req() req: AuthenticatedRequest) {
+    return (await this.db.query('SELECT * FROM user_models WHERE user_id=$1 ORDER BY created_at DESC', [req.user.id])).rows;
+  }
+
+  @Post('user-models')
+  async createUserModel(@Req() req: AuthenticatedRequest, @Body() body: any) {
+    const r = await this.db.query(
+      `INSERT INTO user_models (user_id, name, provider, model_id, base_url, api_key, max_output_tokens) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [req.user.id, body.name, body.provider || 'custom', body.model_id, body.base_url, body.api_key, body.max_output_tokens || 320000],
+    );
+    return r.rows[0];
+  }
+
+  @Delete('user-models/:id')
+  async deleteUserModel(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    await this.db.query('DELETE FROM user_models WHERE id=$1 AND user_id=$2', [id, req.user.id]);
+    return { ok: true };
+  }
 
   @Get('projects')
   projects(@Req() request: AuthenticatedRequest) { return this.studio.listProjects(request.user.id); }

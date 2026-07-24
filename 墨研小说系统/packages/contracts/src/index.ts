@@ -17,7 +17,7 @@ export type ProjectLifecycleStatus =
   | 'writing'
   | 'completed'
   | 'archived';
-export type BuildStageKey = 'proposal' | 'characters' | 'catalog';
+export type BuildStageKey = 'outline' | 'proposal' | 'characters' | 'catalog';
 export type BuildArtifactStatus = 'available' | 'candidate' | 'confirmed' | 'locked';
 export type EpisodeStatus = 'locked' | 'available' | 'draft' | 'review_required' | 'confirmed';
 
@@ -156,6 +156,7 @@ export interface StudioGenerationInputDto {
   stage?: BuildStageKey;
   episodeNumber?: number;
   instruction?: string;
+  modelId?: string;
 }
 
 export interface StudioGenerationRunDto {
