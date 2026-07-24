@@ -1,0 +1,15 @@
+{
+  "name": "@moyan/automation-test",
+  "version": "0.1.0",
+  "private": true,
+  "description": "墨研系统自动化测试插件 (Playwright)，独立于主系统，可随时插拔",
+  "scripts": {
+    "test": "tsx runner.ts",
+    "test:workflow": "tsx runner.ts --script=workflow",
+    "test:review": "tsx runner.ts --script=review",
+    "test:custom": "tsx runner.ts --script=custom"
+  },
+  "dependencies": {
+    "playwright": "*"
+  }
+}
